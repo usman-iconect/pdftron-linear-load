@@ -2,7 +2,8 @@
     "compilerOptions": {
         "noImplicitAny": true,
         "preserveConstEnums": true,
-        "moduleResolution": "Node"
+        "moduleResolution": "Node",
+        "lib": ["ES2015", "DOM"]
     },
     "include": [
         "src/**/*"

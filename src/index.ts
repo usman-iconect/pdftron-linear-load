@@ -13,14 +13,22 @@ WebViewer({
 
     const searchMode = coreController.Search.Mode.REGEX | coreController.Search.Mode.PAGE_STOP | coreController.Search.Mode.HIGHLIGHT;
     let newSearchHighlights: Core.Annotations.TextHighlightAnnotation[] = [];
-    documentViewer.addEventListener('documentLoaded', () => {
-      console.log("starting", new Date().toISOString());
+    documentViewer.addEventListener('documentLoaded', async () => {
+      const doc = documentViewer.getDocument();
+      const secondDoc = await instance.Core.createDocument('/00000003.pdf');
+      doc.insertPages(secondDoc).then(() => {
+        triggerSearch();
+      });
+    })
+
+    function triggerSearch() {
+      console.log("STARTING SEARCH", new Date().toISOString());
       documentViewer.textSearchInit(`(?![\t\n\r\s\b/\\|\[\'\"])(054789638)(?=[\\t\\n\\r\\s\\b/,:;=\\!\\?\\.\\\\\\|\\]\\'\\"\\)]|$)`, searchMode, {
         startPage: 0,
         fullSearch: true,
         onResult: ({ resultStr, pageNum, quads }: { resultStr: string, pageNum: number, quads: any[] }) => {
           resultStr = resultStr.toLowerCase();
-  
+
           const highlight: Core.Annotations.TextHighlightAnnotation = new coreController.Annotations.TextHighlightAnnotation();
           highlight.PageNumber = pageNum;
           highlight.Quads = GetQuads(quads);
@@ -30,28 +38,30 @@ WebViewer({
           highlight.setCustomData('searchIndex', newSearchHighlights.length.toString());
           highlight.setCustomData('navIndex', newSearchHighlights.length.toString());
           newSearchHighlights.push(highlight);
-  
+
         },
         onDocumentEnd: () => {
-  
+
           let pages: { [page: number]: boolean } = {};
           newSearchHighlights.forEach((highlight) => {
             pages[highlight.PageNumber] = true;
             annotationManager.addAnnotation(highlight);
           });
-  
+
           Object.keys(pages).forEach((page) => {
             annotationManager.drawAnnotations({ pageNumber: parseInt(page) });
           })
-          console.log("end", new Date().toISOString());
+          console.log("ENDING SEARCH", new Date().toISOString());
+          console.log("found", newSearchHighlights.length); 
         },
         onError: (error) => {
           console.log("error", error)
         }
       });
-    })
-    
+    }
+
   });
+
 
 
 
